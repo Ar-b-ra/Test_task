@@ -34,4 +34,3 @@ if __name__ == "__main__":
     b = Excavator(number=102)
     print(a.name)
     print(b.name)
-    
