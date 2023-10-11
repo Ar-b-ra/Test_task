@@ -1,7 +1,7 @@
 from abc import ABC
 
 
-class SomeCar(ABC):
+class Resource(ABC):
     max_speed = 0
 
     def __init__(self, number: int | str):
@@ -9,11 +9,11 @@ class SomeCar(ABC):
         self.cur_speed = 0
 
 
-class Tipper(SomeCar):
+class Tipper(Resource):
     max_speed = 80
 
 
-class Excavator(SomeCar):
+class Excavator(Resource):
     max_speed = 40
 
     def __init__(self, number: int):
