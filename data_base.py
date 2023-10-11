@@ -59,6 +59,12 @@ class DatabaseConnection:
                 f")"
             )
 
+    def delete_rows(self, table: str, condition: str):
+        delete_query = f"""
+            DELETE FROM {table} WHERE {condition};
+        """
+        self.execute_query(delete_query)
+
     def execute_query(self, query: str):
         try:
             self.cursor.execute(query)
