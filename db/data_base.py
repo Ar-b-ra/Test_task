@@ -88,7 +88,7 @@ class DatabaseConnection:
 
     def execute_query(self, query: str):
         try:
-            self.cursor.execute(query)
+            self.cursor.execute(f"""{query}""")
             self.connection.commit()
             root_logger.success("Query executed successfully!")
         except psycopg2.Error as error:
@@ -100,35 +100,3 @@ class DatabaseConnection:
             self.connection.close()
             root_logger.success("Database connection closed.")
 
-
-# Подготовка БД
-if __name__ == "__main__":
-    def prepare_db() -> DatabaseConnection:
-        test_db = "test_db"
-        db = DatabaseConnection(
-            dbname=test_db, user="postgres", password="password", host="localhost", port=5432
-        )
-        is_success_connection = db.connect()
-        if not is_success_connection:
-            db.dbname = None
-            db.connect()
-            db.create_database(test_db)
-            db.dbname = test_db
-            db.connect()
-
-        db.create_table(
-            table_name="resource_type", table_params={"type": "VARCHAR(10)", "max_speed": "INTEGER"}
-        )
-        db.create_table(
-            table_name="resource", foreign_key=("resource_type_id", "resource_type", "id"),
-            table_params={
-                "name": "VARCHAR(10)",
-                "cur_speed": "INTEGER",
-                "max_speed_exceeding": "INTEGER"
-            }
-        )
-        db.close()
-        return db
-
-
-    data_base = prepare_db()
