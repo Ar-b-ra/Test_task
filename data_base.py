@@ -1,11 +1,13 @@
+from typing import Union
 import psycopg2
+from logger import root_logger
 
 
 class DatabaseConnection:
     instance = None
 
     def __init__(
-        self, dbname: str, user: str, password: str, host: str, port: int | str
+            self, user: str, password: str, host: str, port: Union[int, str], dbname: str = None
     ):
         self.dbname = dbname
         self.user = user
@@ -15,7 +17,7 @@ class DatabaseConnection:
         self.connection = None
         self.cursor = None
 
-    def connect(self):
+    def connect(self) -> bool:
         try:
             self.connection = psycopg2.connect(
                 dbname=self.dbname,
@@ -25,13 +27,17 @@ class DatabaseConnection:
                 port=self.port,
             )
             self.cursor = self.connection.cursor()
-            print("Connection to the database successful!")
-        except (Exception, psycopg2.Error) as error:
-            print("Error while connecting to PostgreSQL:", error)
+            self.connection.autocommit = True
+            root_logger.success("Connection to the database successful!")
+            return True
+        except psycopg2.Error as error:
+            root_logger.critical(f"Error while connecting to PostgresSQL: {error}")
+            return False
 
     def create_table(
-        self, table_name: str, primary_key: str = "id", table_params: dict = {}
+            self, table_name: str, primary_key: str = "id", foreign_key: tuple = None, table_params: dict = None
     ):
+        root_logger.debug(f"Creating table with {table_name = }, {foreign_key = } and {table_params = }")
         if table_params is None:
             params_to_str = ""
         else:
@@ -45,19 +51,34 @@ class DatabaseConnection:
         )
         tables = self.cursor.fetchall()
 
-        for table in tables:
-            print(table[0])
+        root_logger.debug([table[0] for table in tables])
 
         if table_name in [table[0] for table in tables]:
-            print(f"Database with {table_name} already exists!")
+            root_logger.warning(f"Database with {table_name = } already exists!")
             return
         else:
-            self.execute_query(
-                f"CREATE TABLE {table_name} ("
-                f"{primary_key} SERIAL PRIMARY KEY,"
-                f"{params_to_str}"
-                f")"
-            )
+            if foreign_key:
+                _key, ref_table, ref_param = foreign_key
+                self.execute_query(
+                    f"""CREATE TABLE {table_name} ("""
+                    f"""{primary_key} SERIAL PRIMARY KEY,"""
+                    f"""{_key} integer REFERENCES {ref_table}({ref_param}),"""
+                    f"{params_to_str}"""
+                    f""")"""
+                )
+            else:
+                self.execute_query(
+                    f"""CREATE TABLE {table_name} ("""
+                    f"""{primary_key} SERIAL PRIMARY KEY,"""
+                    f"{params_to_str}"""
+                    f""")"""
+                )
+
+    def create_database(self, db_name: str):
+        root_logger.debug(f"Creating database with {db_name = }")
+        self.execute_query(
+            f"""CREATE DATABASE {db_name}"""
+        )
 
     def delete_rows(self, table: str, condition: str):
         delete_query = f"""
@@ -69,28 +90,45 @@ class DatabaseConnection:
         try:
             self.cursor.execute(query)
             self.connection.commit()
-            print("Query executed successfully!")
-        except (Exception, psycopg2.Error) as error:
-            print("Error while executing query:", error)
+            root_logger.success("Query executed successfully!")
+        except psycopg2.Error as error:
+            root_logger.critical(f"Error while executing query: {error}")
 
     def close(self):
         if self.connection:
             self.cursor.close()
             self.connection.close()
-            print("Database connection closed.")
+            root_logger.success("Database connection closed.")
 
 
-# Пример использования класса:
+# Подготовка БД
 if __name__ == "__main__":
-    db = DatabaseConnection(
-        "Test_db", "postgres", "mysecretpassword", "localhost", 5432
-    )
-    db.connect()
+    def prepare_db() -> DatabaseConnection:
+        test_db = "test_db"
+        db = DatabaseConnection(
+            dbname=test_db, user="postgres", password="password", host="localhost", port=5432
+        )
+        is_success_connection = db.connect()
+        if not is_success_connection:
+            db.dbname = None
+            db.connect()
+            db.create_database(test_db)
+            db.dbname = test_db
+            db.connect()
 
-    # Выполнение SQL-запроса
-    db.create_table(
-        "some_table", table_params={"name": "VARCHAR(10)", "amount": "INTEGER"}
-    )
+        db.create_table(
+            table_name="resource_type", table_params={"type": "VARCHAR(10)", "max_speed": "INTEGER"}
+        )
+        db.create_table(
+            table_name="resource", foreign_key=("resource_type_id", "resource_type", "id"),
+            table_params={
+                "name": "VARCHAR(10)",
+                "cur_speed": "INTEGER",
+                "max_speed_exceeding": "INTEGER"
+            }
+        )
+        db.close()
+        return db
 
-    # Закрытие соединения с базой данных
-    db.close()
+
+    data_base = prepare_db()
