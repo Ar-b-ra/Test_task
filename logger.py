@@ -1,15 +1,31 @@
-import logging
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Union
+
+from loguru import logger
+
+root_logger = logger
+now = datetime.now()
+dt_string = now.strftime("%d %B %Y")
+time_string = now.strftime("%H_%M_%S")
 
 
-file_log = logging.FileHandler("Log.log")
-console_out = logging.StreamHandler()
+def init_logger_levels(root_logger_level: Union[int, str] = "DEBUG",
+                       file_handler_level: Union[int, str, None] = None,
+                       console_handler_level: Union[int, str, None] = None) -> None:
+    """
+    Инициализация логеров согласно конфигурации программы
 
-logging.basicConfig(
-    handlers=(file_log, console_out),
-    format="[%(asctime)s | %(levelname)s]: %(message)s",
-    datefmt="%m.%d.%Y %H:%M:%S",
-    level=logging.INFO,
-)
+    Основной уровень логирования используется в случае, если не указан уровень логирования для конкретного логгера
 
-root_logger = logging.getLogger(__name__)
-root_logger.setLevel(logging.DEBUG)
+    :param root_logger_level: основной уровень логирования
+    :param file_handler_level: уровень логирования в файл
+    :param console_handler_level: уровень логирования в консоль
+
+    """
+    root_logger.remove()
+    root_logger.add(sys.stdout, level=root_logger_level if console_handler_level is None else console_handler_level)
+    root_logger.add(Path("logs") / dt_string / time_string / "log_{time}.log",
+                    level=root_logger_level if file_handler_level is None else file_handler_level,
+                    rotation="1 MB")
