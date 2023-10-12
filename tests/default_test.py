@@ -1,38 +1,80 @@
 import unittest
-from io import BytesIO
+from db.data_base import DatabaseConnection
 
-from request_handler import HTTPRequestHandler
+user = "postgres"
+password = "password"
+database_name = "test_db"
+host = "localhost"
 
 
 class SimpleHTTPRequestHandlerTests(unittest.TestCase):
     def setUp(self):
-        self.handler = HTTPRequestHandler()
-        self.handler.requestline = "GET / HTTP/1.1\r\n"
-        self.handler.client_address = ("127.0.0.1", 12345)
-        self.handler.headers = {}
+        self.connection = DatabaseConnection(user, password, host, 5432, database_name)
+        self.connection.connect()
 
-    def test_do_GET_positive(self):
-        response = self.handler.do_GET()
-        self.assertEqual(response, b"Received get request")
+    def tearDown(self):
+        self.connection.execute_query("DROP TABLE temp_table")
+        self.connection.close()
 
-    def test_do_POST_positive(self):
-        post_data = b'{"key": "value"}'
-        self.handler.headers["Content-length"] = len(post_data)
-        self.handler.rfile = BytesIO(post_data)
-        response = self.handler.do_POST()
-        self.assertEqual(response, b"Received post request:<br>{'key': 'value'}")
+    def test_connect_success(self):
+        assert self.connection.connect()
 
-    def test_do_POST_negative(self):
-        post_data = b'{"key": "value"'  # Invalid JSON
-        self.handler.headers["Content-length"] = len(post_data)
-        self.handler.rfile = BytesIO(post_data)
-        response = self.handler.do_POST()
-        self.assertEqual(response, b"")  # Expecting an empty response
+    def test_connect_failure(self):
+        connection = DatabaseConnection(
+            user, "wrong_password", host, 5432, database_name
+        )
+        assert not connection.connect()
 
-    def test_do_PUT(self):
-        self.handler.do_POST = lambda: b"PUT request handled"  # Mocking do_POST method
-        response = self.handler.do_PUT()
-        self.assertEqual(response, b"PUT request handled")
+    # def test_create_table_existing_table(self):
+    #     with self.assertLogs(level="WARNING") as log_capture:
+    #         self.connection.create_table("existing_table")
+    #         # Проверяем, что предупреждение было выдано
+    #         assert (
+    #             "Database with table_name = 'existing_table' already exists!"
+    #             in log_capture.output
+    #         )
+    #
+    # def test_create_table_new_table(self):
+    #     with self.assertLogs(level="INFO") as log_capture:
+    #         self.connection.create_table("new_table")
+    #         # Проверяем, что таблица была создана успешно
+    #         assert "Query executed successfully!" in log_capture.output
+    #
+    # def test_create_database(self):
+    #     with self.assertLogs(level="INFO") as log_capture:
+    #         self.connection.create_database("new_db")
+    #         # Проверяем, что база данных была создана успешно
+    #         assert "Query executed successfully!" in log_capture.output
+
+    def test_delete_rows(self):
+        # Создаем временную таблицу для теста
+        self.connection.execute_query("DROP TABLE temp_table")
+        self.connection.create_table(
+            "temp_table", "id", foreign_key=None, table_params={"name": "VARCHAR(15)"}
+        )
+        self.connection.execute_query(
+            "INSERT INTO temp_table (id, name) VALUES (1, 'John')"
+        )
+        self.connection.execute_query(
+            "INSERT INTO temp_table (id, name) VALUES (2, 'Jane')"
+        )
+        self.connection.delete_rows("temp_table", "id=1")
+        # Проверяем, что строка была успешно удалена
+        self.connection.execute_query("SELECT * FROM temp_table")
+        result = self.connection.cursor.fetchall()
+        assert len(result) == 1
+
+    # def test_execute_query_success(self):
+    #     with self.assertLogs(level="INFO") as log_capture:
+    #         self.connection.execute_query("SELECT * FROM existing_table")
+    #         # Проверяем, что запрос был выполнен успешно
+    #         assert "Query executed successfully!" in log_capture.output
+    #
+    # def test_execute_query_failure(self):
+    #     with self.assertLogs(level="ERROR") as log_capture:
+    #         self.connection.execute_query("SELECT * FROM non_existing_table")
+    #         # Проверяем, что ошибка была выдана
+    #         assert "Error while executing query" in log_capture.output
 
 
 if __name__ == "__main__":
