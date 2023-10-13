@@ -47,10 +47,12 @@ def application(environ, start_response):
                 data_base.delete_rows(
                     table="resources", condition=f"'name'={prepared_json['name']}"
                 )
-            answer = [f"All resources for {prepared_json} was deleated".encode("UTF-8")]
+            answer = [f"All resources for {prepared_json} was deleted".encode("UTF-8")]
         else:
             answer = [b"What do you mean?"]
         return answer
+    elif path == "/resources/id":
+        pass
     return [b"404 Not Found"]
 
 
