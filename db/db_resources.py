@@ -1,3 +1,5 @@
+from typing import Union
+
 from db.data_base import DatabaseConnection
 
 
@@ -32,7 +34,7 @@ class ResourcesDataBaseManager(DatabaseConnection):
         )
 
     def create_resource(
-            self, resource_name: str, resource_type: str | int, current_speed: int
+            self, resource_name: str, resource_type: Union[str, int], current_speed: int
     ):
         if isinstance(resource_type, str):
             resource_type_id = self._get_resource_type_id(resource_type)
