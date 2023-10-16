@@ -34,6 +34,17 @@ class DatabaseConnection:
             root_logger.critical(f"Error while connecting to PostgresSQL: {error}")
             return False
 
+    def get_table_names(self):
+        self.execute_query(
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema NOT IN ('information_schema','pg_catalog')"
+        )
+        tables = self.cursor.fetchall()
+
+        root_logger.debug([table[0] for table in tables])
+
+        return [table[0] for table in tables]
+
     def create_table(
             self, table_name: str, primary_key: str = "id", foreign_key: tuple = None, table_params: dict = None
     ):
@@ -45,15 +56,7 @@ class DatabaseConnection:
                 [f"{key} {value}" for key, value in table_params.items()]
             )
 
-        self.execute_query(
-            "SELECT table_name FROM information_schema.tables "
-            "WHERE table_schema NOT IN ('information_schema','pg_catalog')"
-        )
-        tables = self.cursor.fetchall()
-
-        root_logger.debug([table[0] for table in tables])
-
-        if table_name in [table[0] for table in tables]:
+        if table_name in self.get_table_names():
             root_logger.warning(f"Database with {table_name = } already exists!")
             return
         else:
@@ -102,4 +105,3 @@ class DatabaseConnection:
             self.cursor.close()
             self.connection.close()
             root_logger.success("Database connection closed.")
-
