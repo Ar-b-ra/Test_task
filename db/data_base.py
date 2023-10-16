@@ -88,11 +88,14 @@ class DatabaseConnection:
 
     def execute_query(self, query: str):
         try:
+            root_logger.trace(query)
             self.cursor.execute(f"""{query}""")
             self.connection.commit()
-            root_logger.success("Query executed successfully!")
+            root_logger.success(f"{query} executed successfully!")
+            return True
         except psycopg2.Error as error:
-            root_logger.critical(f"Error while executing query: {error}")
+            root_logger.critical(f"Error while executing {query = }: {error}")
+            return False
 
     def close(self):
         if self.connection:

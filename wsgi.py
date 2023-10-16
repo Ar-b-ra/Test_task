@@ -14,6 +14,8 @@ def application(environ, start_response):
     path = environ.get("PATH_INFO", "/")
     request_method = environ["REQUEST_METHOD"]
 
+    answer = "404 Not Found"
+
     try:
         request_body_size = int(environ.get("CONTENT_LENGTH", 0))
         request_body = environ["wsgi.input"].read(request_body_size)
@@ -23,38 +25,44 @@ def application(environ, start_response):
         prepared_json = {}
 
     if path == "/resources":
-        if request_method == "GET":
-            answer = [
-                str(json.dumps(data)).encode("UTF-8")
-                for data in data_base.get_resources(
-                    resource_name=prepared_json.get("name")
-                )
-            ] if prepared_json else [data_base.get_resources()]
 
-        elif request_method == "POST":
+        if request_method == "POST":
             root_logger.info(prepared_json)
-            data_base.create_resource_type(
+            answer = data_base.create_resource_type(
                 resource_name=prepared_json["type"],
                 max_speed=prepared_json["max_speed"],
             )
-            answer = [b"Done!"]
+
+        elif request_method == "GET":
+            answer = [
+                str(json.dumps(data))
+                for data in data_base.get_resource_types(
+                    resource_type_name=prepared_json.get("type")
+                )
+            ] if prepared_json else [data_base.get_resource_types()]
+
+        elif request_method == "UPDATE":
+            answer = data_base.update_resource_type(resource_type=prepared_json["type"],
+                                                    max_speed=prepared_json["max_speed"])
+
         elif request_method == "DELETE":
             if isinstance(prepared_json, list):
                 for single_json in prepared_json:
-                    data_base.delete_rows(
-                        table="resources", condition=f"'name'={single_json['name']}"
-                    )
+                    answer = data_base.delete_resource_type(single_json['type'])
             else:
-                data_base.delete_rows(
-                    table="resources", condition=f"'name'={prepared_json['name']}"
-                )
-            answer = [f"All resources for {prepared_json} was deleted".encode("UTF-8")]
-        else:
-            answer = [b"What do you mean?"]
-        return answer
+                answer = data_base.delete_resource_type(prepared_json['type'])
+
+
     elif path == "/resources/id":
-        pass
-    return [b"404 Not Found"]
+        if request_method == "POST":
+            answer = data_base.create_resource(resource_name=prepared_json["name"],
+                                               resource_type=prepared_json["type"],
+                                               current_speed=prepared_json["speed"])
+
+        elif request_method == "DELETE":
+            answer = data_base.delete_resource(resource_name=prepared_json['name'])
+
+    return [json.dumps({"result": answer}).encode("UTF-8")]
 
 
 if __name__ == "__main__":

@@ -26,6 +26,23 @@ class ResourcesDataBaseManager(DatabaseConnection):
             },
         )
 
+    def create_resource_type(self, resource_name: str, max_speed: int):
+        self.execute_query(
+            f"INSERT INTO resource_type (type, max_speed) VALUES('{resource_name}', {max_speed})"
+        )
+
+    def create_resource(
+            self, resource_name: str, resource_type: str | int, current_speed: int
+    ):
+        if isinstance(resource_type, str):
+            resource_type_id = self._get_resource_type_id(resource_type)
+        else:
+            resource_type_id = resource_type
+        self.execute_query(
+            f"INSERT INTO resources (name, resource_type_id, cur_speed) "
+            f"VALUES('{resource_name}', {resource_type_id}, {current_speed})"
+        )
+
     def get_resources(self, resource_name: str = None) -> list:
         if resource_name:
             self.execute_query(f"SELECT * FROM resources WHERE name='{resource_name}'")
@@ -44,7 +61,7 @@ class ResourcesDataBaseManager(DatabaseConnection):
                     "name": name,
                     "cur_speed": cur_speed,
                     "type": res_type,
-                    "speed_exceed": int((cur_speed - max_speed)/max_speed * 100)
+                    "speed_exceed": int((cur_speed - max_speed) / max_speed * 100)
                     if cur_speed > max_speed
                     else 0,
                 }
@@ -59,12 +76,18 @@ class ResourcesDataBaseManager(DatabaseConnection):
             )
         else:
             self.execute_query(r"SELECT * FROM resources")
-        return self.cursor.fetchall()
+        resource_types = self.cursor.fetchall()
+
+        results = []
+        for row in resource_types:
+            results.append(dict(zip(self.cursor.description, row)))
+
+        return results
 
     def get_resource_types(self, resource_type_name: str = None) -> list:
         if resource_type_name:
             self.execute_query(
-                f"SELECT id FROM resource_type WHERE type='{resource_type_name}'"
+                f"SELECT * FROM resource_type WHERE type='{resource_type_name}'"
             )
         else:
             self.execute_query(f"SELECT * FROM resource_type")
@@ -74,27 +97,16 @@ class ResourcesDataBaseManager(DatabaseConnection):
             for _, res_type, max_speed in resource_types
         ]
 
-    def create_resource_type(self, resource_name: str, max_speed: int):
-        self.execute_query(
-            f"INSERT INTO resource_type (type, max_speed) VALUES('{resource_name}', {max_speed})"
-        )
+    def update_recourse(self, resource_name: str, current_speed: int):
+        self.execute_query(f"UPDATE resources SET current_speed = {current_speed}' WHERE name = {resource_name}")
 
-    def create_resource(
-        self, resource_name: str, resource_type: str | int, current_speed: int
-    ):
-        if isinstance(resource_type, str):
-            resource_type_id = self._get_resource_type_id(resource_type)
-        else:
-            resource_type_id = resource_type
-        self.execute_query(
-            f"INSERT INTO resources (name, resource_type_id, cur_speed) "
-            f"VALUES('{resource_name}', {resource_type_id}, {current_speed})"
-        )
+    def update_resource_type(self, resource_type: str, max_speed: int):
+        self.execute_query(f"UPDATE resource_type SET max_speed = {max_speed}' WHERE type = {resource_type}")
 
-    def remove_resource(self, resource_name: str):
+    def delete_resource(self, resource_name: str):
         self.delete_rows(table="resources", condition=f"name={resource_name}")
 
-    def remove_resource_type(self, resource_type_name: str):
+    def delete_resource_type(self, resource_type_name: str):
         resource_type_id = self._get_resource_type_id(resource_type_name)
         self.execute_query(
             f"UPDATE resources "
