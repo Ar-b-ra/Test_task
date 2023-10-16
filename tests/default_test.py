@@ -1,5 +1,4 @@
 import unittest
-from db.data_base import DatabaseConnection
 from db.db_resources import ResourcesDataBaseManager
 
 user = "postgres"
@@ -27,7 +26,6 @@ class SimpleHTTPRequestHandlerTests(unittest.TestCase):
         self.connection.execute_query(f"DROP TABLE resources;")
         self.connection.execute_query(f"DROP TABLE resource_type;")
         self.connection.close()
-
 
     def test_connect_success(self):
         assert self.connection.connect()
