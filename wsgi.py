@@ -1,3 +1,4 @@
+import argparse
 import json
 from wsgiref.simple_server import make_server
 
@@ -28,7 +29,7 @@ def application(environ, start_response):
                 for data in data_base.get_resources(
                     resource_name=prepared_json.get("name")
                 )
-            ]
+            ] if prepared_json else [data_base.get_resources()]
 
         elif request_method == "POST":
             root_logger.info(prepared_json)
@@ -57,8 +58,20 @@ def application(environ, start_response):
 
 
 if __name__ == "__main__":
-    host = "localhost"
-    port = 8000
+    parser = argparse.ArgumentParser()
+
+    # Добавляем опциональные аргументы для адреса хоста и порта
+    parser.add_argument('--host', default='localhost', type=str, help='Адрес хоста')
+    parser.add_argument('--port', '-p', default=8000, type=int, help='Порт')
+
+    # Парсим аргументы командной строки
+    args = parser.parse_args()
+
+    # Выводим адрес хоста и порт
+    root_logger.debug(f"Host = {args.host}, port = {args.port}")
+
+    host = args.host
+    port = args.port
     test_db = "test_db"
     data_base = ResourcesDataBaseManager(
         dbname=test_db,
