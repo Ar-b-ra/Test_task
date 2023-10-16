@@ -84,7 +84,7 @@ class ResourcesDataBaseManager(DatabaseConnection):
 
         return results
 
-    def get_resource_types(self, resource_type_name: str = None) -> list:
+    def get_resource_types(self, resource_type_name: str = None) -> list[dict]:
         if resource_type_name:
             self.execute_query(
                 f"SELECT * FROM resource_type WHERE type='{resource_type_name}'"
@@ -97,23 +97,24 @@ class ResourcesDataBaseManager(DatabaseConnection):
             for _, res_type, max_speed in resource_types
         ]
 
-    def update_recourse(self, resource_name: str, current_speed: int):
-        self.execute_query(f"UPDATE resources SET current_speed = {current_speed}' WHERE name = {resource_name}")
 
-    def update_resource_type(self, resource_type: str, max_speed: int):
-        self.execute_query(f"UPDATE resource_type SET max_speed = {max_speed}' WHERE type = {resource_type}")
+    def update_recourse(self, resource_name: str, current_speed: int) -> bool:
+        return self.execute_query(f"UPDATE resources SET current_speed = {current_speed}' WHERE name = '{resource_name}'")
 
-    def delete_resource(self, resource_name: str):
-        self.delete_rows(table="resources", condition=f"name={resource_name}")
+    def update_resource_type(self, resource_type: str, max_speed: int) -> bool:
+        return self.execute_query(f"UPDATE resource_type SET max_speed = {max_speed} WHERE type = '{resource_type}'")
 
-    def delete_resource_type(self, resource_type_name: str):
+    def delete_resource(self, resource_name: str) -> bool:
+        return self.delete_rows(table="resources", condition=f"name={resource_name}")
+
+    def delete_resource_type(self, resource_type_name: str) -> bool:
         resource_type_id = self._get_resource_type_id(resource_type_name)
         self.execute_query(
             f"UPDATE resources "
             f"SET resource_type = -1 "
             f"WHERE resource_type_id={resource_type_id}"
         )
-        self.delete_rows(table="resource_type", condition=f"type={resource_type_name}")
+        return self.delete_rows(table="resource_type", condition=f"type={resource_type_name}")
 
     def _get_resource_type_id(self, resource_type: str) -> int:
         self.execute_query(f"SELECT id FROM resource_type WHERE type='{resource_type}'")
