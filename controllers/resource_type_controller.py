@@ -15,19 +15,19 @@ class ResourceTypeController(BaseResourceController):
             resource_name=prepared_json["type"],
             max_speed=prepared_json["max_speed"],
         )
-        return status, answer
+        return "201 CREATED", answer
 
     def get(self, prepared_json):
         answer = [json.dumps(asdict(resource)) for resource in
                   self.data_base.get_resource_types(
                 resource_type_name=prepared_json.get("type"))]
 
-        return status, answer
+        return "200 OK", answer
 
     def update(self, prepared_json):
         answer = self.data_base.update_resource_type(resource_type=prepared_json["type"],
                                                      max_speed=prepared_json["max_speed"])
-        return status, answer
+        return "200 OK", answer
 
     def delete(self, prepared_json):
         if isinstance(prepared_json, list):
@@ -36,4 +36,4 @@ class ResourceTypeController(BaseResourceController):
         else:
             answer = self.data_base.delete_resource_type(prepared_json['type'])
 
-        return status, answer
+        return "204  No Content", None

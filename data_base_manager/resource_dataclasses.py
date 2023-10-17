@@ -3,12 +3,23 @@ from dataclasses import dataclass
 
 @dataclass
 class TypeResource:
+    """
+    Структура типа ресурса.
+    :param: name: имя типа ресурса
+    :param: max_speed: максимальная скорость типа ресурса
+    """
     name: str
     max_speed: int
 
 
 @dataclass
 class Resource:
+    """
+    Структура экземпляра ресурса.
+    :param: name: имя ресурса
+    :param: current_speed: текущая скорость типа ресурса
+    :param: тип ресурсва, к которому принадлежит данный ресурс
+    """
     name: str
     current_speed: int
     resource_type: TypeResource
