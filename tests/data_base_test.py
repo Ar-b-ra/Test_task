@@ -1,5 +1,5 @@
 import unittest
-from db.db_resources import ResourcesDataBaseManager
+from db.resource_database_manager import ResourcesDataBaseManager
 
 user = "postgres"
 password = "password"

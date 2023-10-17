@@ -3,7 +3,7 @@ import psycopg2
 from logger import root_logger
 
 
-class DatabaseConnection:
+class DatabaseController:
     instance = None
 
     def __init__(

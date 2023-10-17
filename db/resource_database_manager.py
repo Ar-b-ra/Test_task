@@ -1,9 +1,9 @@
-from typing import Union
+from typing import Union, Optional
 
-from db.data_base import DatabaseConnection
+from db.default_data_base import DatabaseController
 
 
-class ResourcesDataBaseManager(DatabaseConnection):
+class ResourcesDataBaseManager(DatabaseController):
     def prepare_test_db(self, test_db_name: str = "test_db"):
         self.dbname = test_db_name
         is_success_connection = self.connect()
@@ -45,7 +45,7 @@ class ResourcesDataBaseManager(DatabaseConnection):
             f"VALUES(\'{resource_name}\', {resource_type_id}, {current_speed})"
         )
 
-    def get_resources(self, resource_name: str = None) -> list:
+    def get_resources(self, resource_name: Optional[str] = None) -> list:
         if resource_name:
             self.execute_query(f"SELECT * FROM resources WHERE name=\'{resource_name}\'")
         else:
@@ -70,7 +70,7 @@ class ResourcesDataBaseManager(DatabaseConnection):
             )
         return answer
 
-    def get_resources_by_type(self, resource_type: str = None) -> list:
+    def get_resources_by_type(self, resource_type: Optional[str] = None) -> list:
         resource_type_id = self._get_resource_type_id(resource_type=resource_type) if resource_type else None
         if resource_type_id:
             self.execute_query(
@@ -98,7 +98,7 @@ class ResourcesDataBaseManager(DatabaseConnection):
             )
         return answer
 
-    def get_resource_types(self, resource_type_name: str = None) -> list[dict]:
+    def get_resource_types(self, resource_type_name: Optional[str] = None) -> list[dict]:
         if resource_type_name:
             self.execute_query(
                 f"SELECT * FROM resource_type WHERE type=\'{resource_type_name}\'"
