@@ -55,6 +55,7 @@ if __name__ == "__main__":
     init_logger_levels()
     data_base.prepare_test_db()
     data_base.create_base_tables()
+    data_base.create_fixtures()
     router = Controller(data_base=data_base)
     with make_server(host, port, application) as httpd:
         root_logger.info(f"Сервер запущен на https://{host}:{port}...")

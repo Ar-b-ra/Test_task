@@ -3,6 +3,34 @@ from typing import Union, Optional, List
 from data_base_manager.resource_dataclasses import TypeResource, Resource
 from data_base_manager.default_data_base import DatabaseController
 
+TIPPER = TypeResource(name="tipper",
+                      max_speed=80)
+EXCAVATOR = TypeResource(name="excavator",
+                         max_speed=40)
+NO_TYPE = TypeResource(name="no_type",
+                       max_speed=-1)
+
+FIRST_TIPPER = Resource(
+    name="101",
+    current_speed=63,
+    resource_type=TIPPER
+)
+SECOND_TIPPER = Resource(
+    name="102",
+    current_speed=85,
+    resource_type=TIPPER
+)
+FIRST_EXCAVATOR = Resource(
+    name="E103",
+    current_speed=60,
+    resource_type=EXCAVATOR
+)
+SECOND_EXCAVATOR = Resource(
+    name="E104",
+    current_speed=0,
+    resource_type=EXCAVATOR
+)
+
 
 class ResourcesDataBaseManager(DatabaseController):
     def prepare_test_db(self, test_db_name: str = "test_db"):
@@ -28,6 +56,13 @@ class ResourcesDataBaseManager(DatabaseController):
                 "cur_speed": "INTEGER",
             },
         )
+
+    def create_fixtures(self):
+        for _type in [NO_TYPE, EXCAVATOR, TIPPER]:
+            self.create_resource_type(resource_name=_type.name, max_speed=_type.max_speed)
+        for resource in [FIRST_TIPPER, SECOND_TIPPER, FIRST_EXCAVATOR, SECOND_EXCAVATOR]:
+            self.create_resource(resource_type=resource.resource_type.name,
+                                 resource_name=resource.name, current_speed=resource.current_speed)
 
     def create_resource_type(self, resource_name: str, max_speed: int) -> bool:
         return self.execute_query(
