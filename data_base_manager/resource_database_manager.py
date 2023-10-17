@@ -1,6 +1,7 @@
-from typing import Union, Optional
+from typing import Union, Optional, List
 
-from db.default_data_base import DatabaseController
+from data_base_manager.resource_dataclasses import TypeResource, Resource
+from data_base_manager.default_data_base import DatabaseController
 
 
 class ResourcesDataBaseManager(DatabaseController):
@@ -28,24 +29,24 @@ class ResourcesDataBaseManager(DatabaseController):
             },
         )
 
-    def create_resource_type(self, resource_name: str, max_speed: int):
-        self.execute_query(
+    def create_resource_type(self, resource_name: str, max_speed: int) -> bool:
+        return self.execute_query(
             f"INSERT INTO resource_type (type, max_speed) VALUES('{resource_name}', {max_speed})"
         )
 
     def create_resource(
             self, resource_name: str, resource_type: Union[str, int], current_speed: int
-    ):
+    ) -> bool:
         if isinstance(resource_type, str):
             resource_type_id = self._get_resource_type_id(resource_type)
         else:
             resource_type_id = resource_type
-        self.execute_query(
+        return self.execute_query(
             f"INSERT INTO resources (name, resource_type_id, cur_speed) "
             f"VALUES(\'{resource_name}\', {resource_type_id}, {current_speed})"
         )
 
-    def get_resources(self, resource_name: Optional[str] = None) -> list:
+    def get_resources(self, resource_name: Optional[str] = None) -> list[Resource]:
         if resource_name:
             self.execute_query(f"SELECT * FROM resources WHERE name=\'{resource_name}\'")
         else:
@@ -54,23 +55,19 @@ class ResourcesDataBaseManager(DatabaseController):
         answer = []
         types = {}
         for _, res_type_id, name, cur_speed in resources:
-            if not (type_params := types.get(res_type_id)):
-                type_params = self._get_resource_type_by_id(res_type_id)
-                types[res_type_id] = type_params
-            res_type, max_speed = type_params
+            if not (resource_type := types.get(res_type_id)):
+                resource_type = self._get_resource_type_by_id(res_type_id)
+                types[res_type_id] = resource_type
             answer.append(
-                {
-                    "name": name,
-                    "current_speed": cur_speed,
-                    "type": res_type,
-                    "speed_exceed": int((cur_speed - max_speed) / max_speed * 100)
-                    if cur_speed > max_speed
-                    else 0,
-                }
+                Resource(
+                    name=name,
+                    current_speed=cur_speed,
+                    resource_type=resource_type
+                )
             )
         return answer
 
-    def get_resources_by_type(self, resource_type: Optional[str] = None) -> list:
+    def get_resources_by_type(self, resource_type: Optional[str] = None) -> list[Resource]:
         resource_type_id = self._get_resource_type_id(resource_type=resource_type) if resource_type else None
         if resource_type_id:
             self.execute_query(
@@ -82,23 +79,19 @@ class ResourcesDataBaseManager(DatabaseController):
         types = {}
         resources = self.cursor.fetchall()
         for _, res_type_id, name, cur_speed in resources:
-            if not (type_params := types.get(res_type_id)):
-                type_params = self._get_resource_type_by_id(res_type_id)
-                types[res_type_id] = type_params
-            res_type, max_speed = type_params
+            if not (resource_type := types.get(res_type_id)):
+                resource_type = self._get_resource_type_by_id(res_type_id)
+                types[res_type_id] = resource_type
             answer.append(
-                {
-                    "name": name,
-                    "current_speed": cur_speed,
-                    "type": res_type,
-                    "speed_exceed": int((cur_speed - max_speed) / max_speed * 100)
-                    if cur_speed > max_speed
-                    else 0,
-                }
+                Resource(
+                    name=name,
+                    current_speed=cur_speed,
+                    resource_type=resource_type
+                )
             )
         return answer
 
-    def get_resource_types(self, resource_type_name: Optional[str] = None) -> list[dict]:
+    def get_resource_types(self, resource_type_name: Optional[str] = None) -> list[TypeResource]:
         if resource_type_name:
             self.execute_query(
                 f"SELECT * FROM resource_type WHERE type=\'{resource_type_name}\'"
@@ -107,7 +100,10 @@ class ResourcesDataBaseManager(DatabaseController):
             self.execute_query(f"SELECT * FROM resource_type")
         resource_types = self.cursor.fetchall()
         return [
-            {"type": res_type, "max_speed": max_speed}
+            TypeResource(
+                name=res_type,
+                max_speed=max_speed
+            )
             for _, res_type, max_speed in resource_types
         ]
 
@@ -135,7 +131,7 @@ class ResourcesDataBaseManager(DatabaseController):
         (resource_type_id,) = self.cursor.fetchone()
         return resource_type_id
 
-    def _get_resource_type_by_id(self, resource_type_id: int) -> tuple[str, int]:
+    def _get_resource_type_by_id(self, resource_type_id: int) -> TypeResource:
         self.execute_query(
             f"SELECT type, max_speed FROM resource_type WHERE id='{resource_type_id}'"
         )
@@ -143,4 +139,4 @@ class ResourcesDataBaseManager(DatabaseController):
             resource_type,
             max_speed,
         ) = self.cursor.fetchone()
-        return resource_type, max_speed
+        return TypeResource(name=resource_type, max_speed=max_speed)

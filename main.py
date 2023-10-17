@@ -3,7 +3,7 @@ import json
 from wsgiref.simple_server import make_server
 
 from controllers.main_controller import Controller
-from db.resource_database_manager import ResourcesDataBaseManager
+from data_base_manager.resource_database_manager import ResourcesDataBaseManager
 from logger import root_logger, init_logger_levels
 
 

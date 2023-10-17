@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from db.resource_database_manager import ResourcesDataBaseManager
+from data_base_manager.resource_database_manager import ResourcesDataBaseManager
 
 
 class BaseResourceController(ABC):
