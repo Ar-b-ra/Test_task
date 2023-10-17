@@ -1,5 +1,5 @@
-from controllers.resource_controller import ResourceController
 from controllers.resource_type_controller import ResourceTypeController
+from controllers.resource_controller import ResourceController
 from data_base_manager.default_data_base import DatabaseController
 
 

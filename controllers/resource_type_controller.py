@@ -1,4 +1,7 @@
+import json
+
 from controllers.base_resource_controller import BaseResourceController
+from logger import root_logger
 
 status = '200 OK'
 
@@ -6,20 +9,33 @@ status = '200 OK'
 class ResourceTypeController(BaseResourceController):
 
     def post(self, prepared_json):
-        answer = self.data_base.create_resource(resource_name=prepared_json["name"],
-                                                resource_type=prepared_json["type"],
-                                                current_speed=prepared_json["speed"])
+        root_logger.info(prepared_json)
+        answer = self.data_base.create_resource_type(
+            resource_name=prepared_json["type"],
+            max_speed=prepared_json["max_speed"],
+        )
         return status, answer
 
     def get(self, prepared_json):
-        answer = self.data_base.get_resources(resource_name=prepared_json.get("name"))
+        answer = [
+            str(json.dumps(data))
+            for data in self.data_base.get_resource_types(
+                resource_type_name=prepared_json.get("type")
+            )
+        ] if prepared_json else self.data_base.get_resource_types()
+
         return status, answer
 
     def update(self, prepared_json):
-        answer = self.data_base.update_recourse(resource_name=prepared_json["name"],
-                                                current_speed=prepared_json["cur_speed"])
+        answer = self.data_base.update_resource_type(resource_type=prepared_json["type"],
+                                                     max_speed=prepared_json["max_speed"])
         return status, answer
 
     def delete(self, prepared_json):
-        answer = self.data_base.delete_resource(resource_name=prepared_json['name'])
+        if isinstance(prepared_json, list):
+            for single_json in prepared_json:
+                answer = self.data_base.delete_resource_type(single_json['type'])
+        else:
+            answer = self.data_base.delete_resource_type(prepared_json['type'])
+
         return status, answer
