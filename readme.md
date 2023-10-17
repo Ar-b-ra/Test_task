@@ -1,3 +1,8 @@
+## Значения для подключения к БД:
+
+- login: postgres
+- password: password
+
 ## Документация API 
   
 ###  /resources  

@@ -1,37 +1,27 @@
 # Используем базовый образ Python
-FROM python:3.9-slim-buster
-
+FROM python:latest
 # Установка переменных среды
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
+ENV HOST=localhost
+ENV PORT=8000
 # Установка зависимостей
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        postgresql-client \
-        gcc \
-        python3-dev \
-        libpq-dev \
-        netcat && \
-    apt-get clean && \
+RUN apt update -y && \
+    apt upgrade -y && \
+    apt install -y --no-install-recommends \
+    python3-pip \
+    python3-dev \
+    python3-venv \
+        git && \
+    apt autoremove -y && \
     rm -rf /var/lib/apt/lists/*
-
-# Создание директории приложения
-RUN mkdir /app
-
-# Установка рабочей директории
-WORKDIR /app
-
 # Копирование файлов в рабочую директорию
-COPY requirements.txt /app/
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Копирование кода приложения в рабочую директорию
-COPY . /app/
-
-# Запуск PostgreSQL и создание базы данных
-RUN service postgresql start && \
-    su - postgres -c "psql -c 'CREATE DATABASE test_db;'"
-
+COPY . /Test_task
+# Установка рабочей директории
+WORKDIR /Test_task
+# Установка зависимостей
+RUN apt install -y python3-pip && \
+    pip3 install --upgrade pip && \
+    pip3 install -r requirements.txt
 # Запуск приложения
-CMD ["python", "wsgi.py"]
+EXPOSE 8000
+EXPOSE 5432
+CMD ["python3", "main.py"]
