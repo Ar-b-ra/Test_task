@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict
 
 from controllers.base_resource_controller import BaseResourceController
 from logger import root_logger
@@ -17,12 +18,9 @@ class ResourceTypeController(BaseResourceController):
         return status, answer
 
     def get(self, prepared_json):
-        answer = [
-            str(json.dumps(data))
-            for data in self.data_base.get_resource_types(
-                resource_type_name=prepared_json.get("type")
-            )
-        ] if prepared_json else self.data_base.get_resource_types()
+        answer = [json.dumps(asdict(resource)) for resource in
+                  self.data_base.get_resource_types(
+                resource_type_name=prepared_json.get("type"))]
 
         return status, answer
 
