@@ -1,12 +1,12 @@
 import json
 
-from db.resource_database_manager import ResourcesDataBaseManager
+from controllers.base_resource_controller import BaseResourceController
 from logger import root_logger
 
+status = '200 OK'
 
-class ResourceController:
-    def __init__(self, data_base: ResourcesDataBaseManager):
-        self.data_base = data_base
+
+class ResourceController(BaseResourceController):
 
     def post(self, prepared_json):
         root_logger.info(prepared_json)
@@ -14,7 +14,7 @@ class ResourceController:
             resource_name=prepared_json["type"],
             max_speed=prepared_json["max_speed"],
         )
-        return answer
+        return status, answer
 
     def get(self, prepared_json):
         answer = [
@@ -24,12 +24,12 @@ class ResourceController:
             )
         ] if prepared_json else self.data_base.get_resource_types()
 
-        return answer
+        return status, answer
 
     def update(self, prepared_json):
         answer = self.data_base.update_resource_type(resource_type=prepared_json["type"],
                                                      max_speed=prepared_json["max_speed"])
-        return answer
+        return status, answer
 
     def delete(self, prepared_json):
         if isinstance(prepared_json, list):
@@ -38,4 +38,4 @@ class ResourceController:
         else:
             answer = self.data_base.delete_resource_type(prepared_json['type'])
 
-        return answer
+        return status, answer

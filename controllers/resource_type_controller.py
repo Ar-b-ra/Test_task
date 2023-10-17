@@ -1,25 +1,25 @@
-from db.resource_database_manager import ResourcesDataBaseManager
+from controllers.base_resource_controller import BaseResourceController
+
+status = '200 OK'
 
 
-class ResourceTypeController:
-    def __init__(self, data_base: ResourcesDataBaseManager):
-        self.data_base = data_base
+class ResourceTypeController(BaseResourceController):
 
     def post(self, prepared_json):
         answer = self.data_base.create_resource(resource_name=prepared_json["name"],
                                                 resource_type=prepared_json["type"],
                                                 current_speed=prepared_json["speed"])
-        return answer
+        return status, answer
 
     def get(self, prepared_json):
         answer = self.data_base.get_resources(resource_name=prepared_json.get("name"))
-        return answer
+        return status, answer
 
     def update(self, prepared_json):
         answer = self.data_base.update_recourse(resource_name=prepared_json["name"],
                                                 current_speed=prepared_json["cur_speed"])
-        return answer
+        return status, answer
 
     def delete(self, prepared_json):
         answer = self.data_base.delete_resource(resource_name=prepared_json['name'])
-        return answer
+        return status, answer

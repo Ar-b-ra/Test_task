@@ -2,11 +2,9 @@ import argparse
 import json
 from wsgiref.simple_server import make_server
 
-from controllers.main_controller import Router
+from controllers.main_controller import Controller
 from db.resource_database_manager import ResourcesDataBaseManager
 from logger import root_logger, init_logger_levels
-
-router = Router()
 
 
 def application(environ, start_response):
@@ -26,7 +24,7 @@ def application(environ, start_response):
 
     controller_callback = router.resolve(url=url_path, method=request_method)
 
-    status, body = controller_callback(request_method)
+    status, body = controller_callback(prepared_json)
     start_response(status, headers)
     return [json.dumps({"result": body}).encode("UTF-8")]
 
@@ -57,6 +55,7 @@ if __name__ == "__main__":
     init_logger_levels()
     data_base.prepare_test_db()
     data_base.create_base_tables()
+    router = Controller(data_base=data_base)
     with make_server(host, port, application) as httpd:
         root_logger.info(f"Сервер запущен на https://{host}:{port}...")
         httpd.serve_forever()
