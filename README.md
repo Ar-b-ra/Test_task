@@ -156,3 +156,5 @@
 {
   "result": true
 }
+
+[![codecov](https://codecov.io/gh/Ar-b-ra/Test_task/branch/master/graph/badge.svg)](https://codecov.io/gh/Ar-b-ra/Test_task/)
